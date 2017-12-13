@@ -16,13 +16,15 @@ public class RadioListAdapter extends ArrayAdapter{
 
     private final Activity context;
     private final String[] nameArray;
+    private final String[] RadioLink;
 
-    public RadioListAdapter(Activity context, String[] nameArrayParam){
+    public RadioListAdapter(Activity context, String[] nameArrayParam,String[] RadioLink){
 
         super(context,R.layout.listview_row , nameArrayParam);
 
         this.context = context;
         this.nameArray = nameArrayParam;
+        this.RadioLink = RadioLink;
     }
 
     public View getView(int position, View view, ViewGroup parent) {

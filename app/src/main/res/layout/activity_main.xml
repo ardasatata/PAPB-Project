@@ -21,7 +21,7 @@
             android:id="@+id/button_radio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="sendMessage"
+            android:onClick="radioStream"
             android:text="Radio"
             tools:layout_editor_absoluteX="148dp"
             tools:layout_editor_absoluteY="16dp" />
@@ -30,6 +30,7 @@
             android:id="@+id/button_musicPlayer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="musicPlayer"
             android:text="Music Player" />
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

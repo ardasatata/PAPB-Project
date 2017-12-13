@@ -21,9 +21,12 @@
             android:label="Radio List"
             android:parentActivityName=".MainActivity" />
         <activity android:name=".RadioStream"></activity>
+        <activity android:name=".MusicPlayer">
+        </activity>
     </application>
     
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
     <uses-permission android:name="android.permission.INTERNET"></uses-permission>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
 </manifest>

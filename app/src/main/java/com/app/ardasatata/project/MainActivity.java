@@ -14,8 +14,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
-    public void sendMessage(View view) {
+    public void radioStream(View view) {
         Intent intent = new Intent(this,radioList.class );
+        startActivity(intent);
+    }
+
+    public void musicPlayer(View view) {
+        Intent intent = new Intent(this,MusicPlayer.class );
         startActivity(intent);
     }
 }

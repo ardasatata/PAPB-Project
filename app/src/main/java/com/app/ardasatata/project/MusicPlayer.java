@@ -2,8 +2,13 @@ package com.app.ardasatata.project;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -52,6 +57,11 @@ public class MusicPlayer extends AppCompatActivity {
 
     boolean is_pause = false;
 
+    private SensorManager sm;
+    private float acelVal; // current acceleration including gravity
+    private float acelLast; // last acceleration including gravity
+    private float shake; // acceleration apart from gravity
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +77,12 @@ public class MusicPlayer extends AppCompatActivity {
         song_next = findViewById(R.id.music_next);
         song_prev = findViewById(R.id.music_prev);
 
+        sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        sm.registerListener(sensorListener,sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) ,SensorManager.SENSOR_DELAY_NORMAL);
+
+        shake = 0.00f;
+        acelVal = SensorManager.GRAVITY_EARTH;
+        acelLast = SensorManager.GRAVITY_EARTH;
 
         title = findViewById(R.id.music_title);
 
@@ -77,6 +93,21 @@ public class MusicPlayer extends AppCompatActivity {
         recyclerView.addItemDecoration(dividerItemDecoration);
 
         mediaPlayer = new MediaPlayer();
+
+        if (song_pos>0){
+            final NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(this)
+                            .setSmallIcon(R.drawable.ic_launcher_background)
+                            .setContentTitle("Now Playing")
+                            .setContentText(_songs.get(song_pos).getSongname());
+
+            // Sets an ID for the notification
+            final int mNotificationId = 001;
+            // Gets an instance of the NotificationManager service
+            final NotificationManager mNotifyMgr =
+                    (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        }
 
         songAdapter.setOnItemClickListener(new SongAdapter.OnItemClickListener() {
             @Override
@@ -114,6 +145,7 @@ public class MusicPlayer extends AppCompatActivity {
 
 
         });
+
 
 
 
@@ -326,5 +358,34 @@ public class MusicPlayer extends AppCompatActivity {
         song_pos--;
         playSong(prev_song);
     }
+
+    private final SensorEventListener sensorListener = new SensorEventListener() {
+        @Override
+        public void onSensorChanged(SensorEvent sensorEvent) {
+            float x = sensorEvent.values[0];
+            float y = sensorEvent.values[1];
+            float z = sensorEvent.values[2];
+
+            acelLast = acelVal;
+            acelVal = (float) Math.sqrt((double) (x*x + y*y + z*z));
+            float delta = acelVal - acelLast;
+            shake = shake * 0.9f + delta; // perform low-cut filter
+            if (shake >12) {
+                if (song_pos>0)
+                    try {
+                        nextSong();
+                        Toast toast =Toast.makeText(getApplicationContext(), "Next Song", Toast.LENGTH_SHORT);
+                        toast.show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int i) {
+
+        }
+    };
 
 }

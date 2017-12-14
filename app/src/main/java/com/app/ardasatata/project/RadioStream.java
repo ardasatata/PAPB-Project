@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import java.io.IOException;
 
@@ -21,6 +22,8 @@ public class RadioStream extends AppCompatActivity {
 
     MediaPlayer player;
 
+    TextView status;
+
     boolean prepared=false;
     boolean started=false;
 
@@ -30,12 +33,13 @@ public class RadioStream extends AppCompatActivity {
         setContentView(R.layout.activity_radio_stream);
 
         String RadioLink = getIntent().getStringExtra("stream");
-        String RadioStation = getIntent().getStringExtra("station");
+        final String RadioStation = getIntent().getStringExtra("station");
 
         stream = RadioLink;
 
         play = findViewById(R.id.radio_play);
         pause = findViewById(R.id.radio_pause);
+        status = findViewById(R.id.radio_status);
 
         play.setEnabled(false);
         pause.setEnabled(false);
@@ -45,7 +49,7 @@ public class RadioStream extends AppCompatActivity {
 
         final NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_launcher_background)
+                        .setSmallIcon(R.drawable.notificon)
                         .setContentTitle("Now Playing")
                         .setContentText(RadioStation);
 
@@ -64,6 +68,7 @@ public class RadioStream extends AppCompatActivity {
                 play.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        status.setText("Now Listening to "+RadioStation);
                         started = true;
                         player.start();
                         // Builds the notification and issues it.
@@ -77,6 +82,7 @@ public class RadioStream extends AppCompatActivity {
         pause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                status.setText("Paused");
                 started = false;
                 player.pause();
 
@@ -93,6 +99,7 @@ public class RadioStream extends AppCompatActivity {
         protected Boolean doInBackground(String... strings) {
 
             try {
+                status.setText("Connecting");
                 player.setDataSource(stream);
                 player.prepare();
                 prepared = true;
@@ -106,6 +113,7 @@ public class RadioStream extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean aBoolean) {
             super.onPostExecute(aBoolean);
+            status.setText("Radio Connected");
             play.setEnabled(true);
             pause.setEnabled(true);
         }

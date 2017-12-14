@@ -1,8 +1,10 @@
 package com.app.ardasatata.project;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -11,6 +13,7 @@ import android.os.Handler;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,9 +21,12 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class MusicPlayer extends AppCompatActivity {
@@ -32,6 +38,20 @@ public class MusicPlayer extends AppCompatActivity {
     MediaPlayer mediaPlayer;
     private Handler myHandler = new Handler();
 
+    ImageButton song_play;
+    ImageButton song_pause;
+    ImageButton song_next;
+    ImageButton song_prev;
+
+    TextView title;
+
+    String song_title="";
+
+    int song_pos=-1;
+    int song_prog=0;
+
+    boolean is_pause = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,41 +61,35 @@ public class MusicPlayer extends AppCompatActivity {
         seekBar = (SeekBar) findViewById(R.id.seekBar);
         songAdapter = new SongAdapter(this,_songs);
         recyclerView.setAdapter(songAdapter);
+
+        song_play = findViewById(R.id.music_play);
+        song_pause = findViewById(R.id.music_pause);
+        song_next = findViewById(R.id.music_next);
+        song_prev = findViewById(R.id.music_prev);
+
+
+        title = findViewById(R.id.music_title);
+
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
                 linearLayoutManager.getOrientation());
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.addItemDecoration(dividerItemDecoration);
+
+        mediaPlayer = new MediaPlayer();
+
         songAdapter.setOnItemClickListener(new SongAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(final Button b, View view, final SongInfo obj, int position) {
-                if(b.getText().equals("Stop")){
-                    mediaPlayer.stop();
-                    mediaPlayer.reset();
-                    mediaPlayer.release();
-                    mediaPlayer = null;
-                    b.setText("Play");
-                }else {
 
+                song_pos = position;
 
                     Runnable runnable = new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                mediaPlayer = new MediaPlayer();
-                                mediaPlayer.setDataSource(obj.getSongUrl());
-                                mediaPlayer.prepareAsync();
-                                mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                                    @Override
-                                    public void onPrepared(MediaPlayer mp) {
-                                        mp.start();
-                                        seekBar.setProgress(0);
-                                        seekBar.setMax(mediaPlayer.getDuration());
-                                        Log.d("Prog", "run: " + mediaPlayer.getDuration());
-                                    }
-                                });
-                                b.setText("Stop");
 
+                                playSong(song_pos);
 
                             }catch (Exception e){}
                         }
@@ -83,15 +97,98 @@ public class MusicPlayer extends AppCompatActivity {
                     };
                     myHandler.postDelayed(runnable,100);
 
+//                if(b.getText().equals("Stop")){
+//                    mediaPlayer.stop();
+//                    mediaPlayer.reset();
+//                    mediaPlayer.release();
+//                    mediaPlayer = null;
+//                    b.setText("Play");
+//                }else {
+
+
+
+
+                }
+
+ //           }
+
+
+        });
+
+
+
+        song_play.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mediaPlayer.start();
+            }
+        });
+        song_pause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mediaPlayer.pause();
+            }
+        });
+        song_next.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    nextSong();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });
+        song_prev.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    prevSong();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
 
         checkUserPermission();
 
 
         Thread t = new runThread();
         t.start();
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                song_prog = i;
+                //Mediaplayer.start();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mediaPlayer.seekTo(song_prog);
+            }
+        });
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                mediaPlayer.stop();
+                mediaPlayer.reset();
+                try {
+                    if (song_pos>0)
+                    nextSong();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
     }
 
     public class runThread extends Thread {
@@ -117,7 +214,11 @@ public class MusicPlayer extends AppCompatActivity {
 
                         Log.d("Runwa", "run: " + mediaPlayer.getCurrentPosition());
                     }
+
+
                 }
+
+
             }
 
     }
@@ -173,4 +274,57 @@ public class MusicPlayer extends AppCompatActivity {
 
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mediaPlayer.stop();
+        mediaPlayer.reset();
+        mediaPlayer.release();
+        mediaPlayer = null;
+    }
+
+    protected void playSong(int postition) throws IOException {
+
+        song_title = _songs.get(postition).getSongname();
+
+        if (mediaPlayer.isPlaying()){
+            mediaPlayer.stop();
+            mediaPlayer.reset();
+//                    mediaPlayer.release();
+//                    mediaPlayer = null;
+        }
+
+        mediaPlayer.setDataSource(_songs.get(postition).getSongUrl());
+        mediaPlayer.prepareAsync();
+
+        title.setText(song_title);
+
+        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mp.start();
+                seekBar.setProgress(0);
+                seekBar.setMax(mediaPlayer.getDuration());
+                Log.d("Prog", "run: " + mediaPlayer.getDuration());
+            }
+        });
+        //b.setText("Stop");
+
+    }
+
+    public void nextSong() throws IOException {
+
+        int next_song = song_pos + 1;
+        song_pos++;
+        playSong(next_song);
+    }
+
+    public void prevSong() throws IOException {
+
+        int prev_song = song_pos - 1;
+        song_pos--;
+        playSong(prev_song);
+    }
+
 }

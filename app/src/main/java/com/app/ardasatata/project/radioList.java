@@ -34,7 +34,9 @@ public class radioList extends AppCompatActivity {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 Intent intent = new Intent(radioList.this, RadioStream.class);
                 String stream = RadioLink[i];
+                String station = RadioList[i];
                 intent.putExtra("stream", stream);
+                intent.putExtra("station", station);
                 startActivity(intent);
             }
         });

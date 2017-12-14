@@ -1,12 +1,13 @@
 package com.app.ardasatata.project;
 
+import android.app.NotificationManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 
 import java.io.IOException;
@@ -29,6 +30,7 @@ public class RadioStream extends AppCompatActivity {
         setContentView(R.layout.activity_radio_stream);
 
         String RadioLink = getIntent().getStringExtra("stream");
+        String RadioStation = getIntent().getStringExtra("station");
 
         stream = RadioLink;
 
@@ -41,24 +43,44 @@ public class RadioStream extends AppCompatActivity {
         player = new MediaPlayer();
         player.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
+        final NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_launcher_background)
+                        .setContentTitle("Now Playing")
+                        .setContentText(RadioStation);
 
-        new Thread();
+        // Sets an ID for the notification
+        final int mNotificationId = 001;
+        // Gets an instance of the NotificationManager service
+        final NotificationManager mNotifyMgr =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
 
         new PlayerTask().execute(stream);
 
-        play.setOnClickListener(new View.OnClickListener() {
+        new Thread(new Runnable() {
             @Override
-            public void onClick(View view) {
-                started = true;
-                player.start();
+            public void run() {
+                play.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        started = true;
+                        player.start();
+                        // Builds the notification and issues it.
+                        mNotifyMgr.notify(mNotificationId, mBuilder.build());
+                    }
+                });
             }
-        });
+        }).start();
+
 
         pause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 started = false;
                 player.pause();
+
+                mNotifyMgr.cancelAll();
             }
         });
     }
@@ -95,5 +117,8 @@ public class RadioStream extends AppCompatActivity {
         if (prepared){
             player.release();
         }
+
     }
+
+
 }

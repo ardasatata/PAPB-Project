@@ -30,7 +30,8 @@ public class MusicPlayer extends AppCompatActivity {
     SeekBar seekBar;
     SongAdapter songAdapter;
     MediaPlayer mediaPlayer;
-    private Handler myHandler = new Handler();;
+    private Handler myHandler = new Handler();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,7 @@ public class MusicPlayer extends AppCompatActivity {
                     b.setText("Play");
                 }else {
 
+
                     Runnable runnable = new Runnable() {
                         @Override
                         public void run() {
@@ -75,7 +77,6 @@ public class MusicPlayer extends AppCompatActivity {
                                 b.setText("Stop");
 
 
-
                             }catch (Exception e){}
                         }
 
@@ -85,6 +86,7 @@ public class MusicPlayer extends AppCompatActivity {
                 }
             }
         });
+
         checkUserPermission();
 
 
